@@ -155,14 +155,14 @@
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    #package = config.boot.kernelPackages.nvidiaPackages.latest;
+    #package = config.boot.kernelPackages.nvidiaPackages.stable;
     package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-        version = "570.144";
-        sha256_64bit = "sha256-wLjX7PLiC4N2dnS6uP7k0TI9xVWAJ02Ok0Y16JVfO+Y=";
-        sha256_aarch64 = "sha256-6kk2NLeKvG88QH7/YIrDXW4sgl324ddlAyTybvb0BP0=";
-        openSha256 = "sha256-PATw6u6JjybD2OodqbKrvKdkkCFQPMNPjrVYnAZhK/E=";
-        settingsSha256 = "sha256-VcCa3P/v3tDRzDgaY+hLrQSwswvNhsm93anmOhUymvM=";
-        persistencedSha256 = "sha256-hx4w4NkJ0kN7dkKDiSOsdJxj9+NZwRsZEuhqJ5Rq3nM=";
+      version = "570.153.02";
+      sha256_64bit = "sha256-FIiG5PaVdvqPpnFA5uXdblH5Cy7HSmXxp6czTfpd4bY=";
+      sha256_aarch64 = "sha256-FKhtEVChfw/1sV5FlFVmia/kE1HbahDJaxTlpNETlrA=";
+      openSha256 = "sha256-2DpY3rgQjYFuPfTY4U/5TcrvNqsWWnsOSX0f2TfVgTs=";
+      settingsSha256 = "sha256-5m6caud68Owy4WNqxlIQPXgEmbTe4kZV2vZyTWHWe+M=";
+      persistencedSha256 = "sha256-OSo4Od7NmezRdGm7BLLzYseWABwNGdsomBCkOsNvOxA=";
     };
     
     prime = {
@@ -181,7 +181,7 @@
   services.printing.drivers = [ pkgs.hplip pkgs.brlaser pkgs.cups-brother-hll2350dw ];
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -189,7 +189,7 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
+    jack.enable = true;
 
     # use the example session manager (no others are packaged yet so this is enabled by default,
     # no need to redefine it in your config for now)
@@ -207,6 +207,7 @@
     packages = with pkgs; [
     #  thunderbird
     ];
+    #initialHashedPassword = "test";
   };
 
   # Allow unfree packages
@@ -230,7 +231,10 @@
   programs.traceroute.enable = true;
   
 
-  environment.variables.EDITOR = "vim";
+  environment.variables = {
+    EDITOR = "vim";
+    GI_TYPELIB_PATH = "/run/current-system/sw/lib/girepository-1.0";
+  };
 
   environment.systemPackages = let
     unstable = import <nixos-unstable> { config = { allowUnfree = true; }; };
@@ -244,6 +248,7 @@
     nvme-cli
     minicom
     tio
+    libgtop
     cudatoolkit
     ghostscript
     imagemagick
@@ -284,6 +289,7 @@
     orca-slicer
     kicad
     texliveFull
+    mpv
 
     google-chrome
 
@@ -371,6 +377,7 @@
 
   services.flatpak.enable = true;
   services.fwupd.enable = true;
+  services.ddccontrol.enable = true;
 
   virtualisation.docker = {
       enable = true;
@@ -411,54 +418,10 @@
   specialisation = {
     console.configuration = {
       system.nixos.tags = [ "console" ];
-     # boot.kernelParams = [ "systemd.unit=multi-user.target" ];
+      boot.kernelParams = [ "systemd.unit=multi-user.target" ];
     };
     
     
-    # egpu-noamd.configuration = {
-    #   system.nixos.tags = [ "egpu-noamd" ];
-
-    #   boot.kernelParams = [ "module_blacklist=amdgpu,radeon,simpledrm" "initcall_blacklist=simpledrm_platform_driver_init" ];      
-
-    #   boot.extraModprobeConfig = 
-    #   ''
-    #   install amdgpu /bin/true
-    #   install radeon /bin/true
-    #   install simpledrm /bin/true
-    #   '';
-
-      
-    #   services.xserver.videoDrivers = [ "nvidia" ];
-    #   hardware = {
-    #     #graphics.enable = true;
-    #     nvidia = {
-    #       powerManagement.enable = false;
-    #       modesetting.enable = true;
-          
-    #       powerManagement.finegrained = lib.mkForce false;
-    #       prime = {
-		# offload.enable = lib.mkForce false;
-    #             offload.enableOffloadCmd = lib.mkForce false;
-    #             sync.enable = false;
-    #             reverseSync.enable = false;
-
-		# #  left here for troubleshooting
-		# # nvidiaBusId = "PCI:1:0:0";
-		# # amdgpuBusId = "PCI:2:0:0";
-    #       };
-    #     };
-        
-    #     amdgpu = {
-    #       amdvlk = {
-    #         enable = false;
-    #         support32Bit.enable = false;
-    #       };
-    #       opencl.enable = false;
-    #     };
-    #   };
-      
-    # };
-
     egpu-only.configuration = {
       system.nixos.tags = [ "egpu-only" ];
    
@@ -468,12 +431,7 @@
       
       services.xserver.videoDrivers = [ "nvidia" ];
       hardware = {
-        #graphics.enable = true;
         nvidia = {
-          powerManagement.enable = false;
-          modesetting.enable = true;
-          
-          powerManagement.finegrained = lib.mkForce false;
           prime = {
 		offload.enable = lib.mkForce false;
                 offload.enableOffloadCmd = lib.mkForce false;
