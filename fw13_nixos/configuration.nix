@@ -46,10 +46,6 @@
   networking.hostName = "falcata"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
   # Enable networking
   networking.networkmanager.enable = true;
 
@@ -78,8 +74,6 @@
   services.xserver.enable = true;
 
   # Enable the GNOME Desktop Environment.
-  #services.xserver.displayManager.gdm.enable = true;
-  #services.xserver.desktopManager.gnome.enable = true;
   services.xserver.displayManager.gdm = {
     enable = true;
     wayland = true;
@@ -162,14 +156,6 @@
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     #package = config.boot.kernelPackages.nvidiaPackages.stable;
-    #package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-    #  version = "575.64.03";
-    #  sha256_64bit = "sha256-S7eqhgBLLtKZx9QwoGIsXJAyfOOspPbppTHUxB06DKA=";
-    #  sha256_aarch64 = "sha256-s2Jm2wjdmXZ2hPewHhi6hmd+V1YQ+xmVxRWBt68mLUQ=";
-    #  openSha256 = "sha256-SAl1+XH4ghz8iix95hcuJ/EVqt6ylyzFAao0mLeMmMI=";
-    #  settingsSha256 = "sha256-o8rPAi/tohvHXcBV+ZwiApEQoq+ZLhCMyHzMxIADauI=";
-    #  persistencedSha256 = "sha256-/3OAZx8iMxQLp1KD5evGXvp0nBvWriYapMwlMSc57h8=";
-    #};
     package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
       version = "580.65.06";
       sha256_64bit = "sha256-BLEIZ69YXnZc+/3POe1fS9ESN1vrqwFy6qGHxqpQJP8=";
@@ -205,10 +191,6 @@
     pulse.enable = true;
     # If you want to use JACK applications, uncomment this
     jack.enable = true;
-
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
-    #media-session.enable = true;
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
@@ -222,7 +204,6 @@
     packages = with pkgs; [
     #  thunderbird
     ];
-    #initialHashedPassword = "test";
   };
 
   # Allow unfree packages
@@ -293,13 +274,8 @@
       ])
     )
     
-    #python311Packages.xonsh
     xonsh
 
-    # for some reason these aren't working with numpy
-    #blis
-    #amd-blis
-    #amd-libflame
     mkl
 
     pciutils
@@ -428,9 +404,6 @@
   virtualisation.docker = {
       enable = true;
       enableOnBoot = true;
-      #package = pkgs.docker_25;
-      # Nvidia Docker (deprecated)
-      #enableNvidia = true;
   };
 
   hardware.nvidia-container-toolkit.enable = true;
