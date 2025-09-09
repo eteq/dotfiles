@@ -32,6 +32,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;    
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.timeout = 2;
  
   system.copySystemConfiguration = true;
  
@@ -451,16 +452,15 @@
       systemd.services.smart-rebooter-script = {
         script = ''
           # The search is case-insensitive.
-          DEVICE_NAME="egpu"
+          DEVICE_ID="07554c17-80dd-a02c-ffff-ffffffffffff"
 
-          if /run/current-system/sw/bin/boltctl | grep -iq "$DEVICE_NAME"; then
-              # This block runs if the device IS found
-              echo "Found a '$DEVICE_NAME' thunderbolt device. Assuming EGPU present"
+          if /run/current-system/sw/bin/boltctl info $DEVICE_ID | grep "status:" | grep -iq authorized; then
+              # This block runs if the device is found
+              echo "Found an authorized '$DEVICE_ID' thunderbolt device. Assuming EGPU present"
               BOOT_ENTRY=`ls /boot/loader/entries/*egpu-only.conf | sort -t '-' -k 3n | tail -n 1 | xargs -- basename`
-          else
-              echo "No '$DEVICE_NAME' thunderbolt device was found. Normal Boot."
-              BOOT_ENTRY=`ls /boot/loader/entries/*.conf | grep -v specialisation | sort -t '-' -k 3n | ls /boot/loader/entries/*.conf | grep -v specialisation | sort -t '-' -k 3n | tail -n 1 | xargs -- basename`
-              
+              else
+              echo "No authorized '$DEVICE_ID' thunderbolt device was found. Normal Boot."
+              BOOT_ENTRY=`ls /boot/loader/entries/*.conf | grep -v specialisation | sort -t '-' -k 3n | tail -n 1 | xargs -- basename`
           fi
 
           echo "Rebooting to boot entry '$BOOT_ENTRY'"
