@@ -444,7 +444,37 @@
       system.nixos.tags = [ "console" ];
       boot.kernelParams = [ "systemd.unit=multi-user.target" ];
     };
-    
+
+    smart-rebooter.configuration = {
+      system.nixos.tags = [ "smart-rebooter" ];
+      boot.kernelParams = [ "systemd.unit=rescue.target" ];
+        systemd.services.smart-rebooter-script = {
+          script = ''
+            # The search is case-insensitive.
+            DEVICE_NAME="GeForce"
+
+            if lspci | grep -iq "$DEVICE_NAME"; then
+                # This block runs if the device IS found
+                echo "✅ Found a '$DEVICE_NAME' device. Assuming EGPU present"
+                BOOT_ENTRY=`ls /boot/loader/entries/*egpu-only.conf | sort -t '-' -k 3n | tail -n 1 | xargs -- basename`
+            else
+                echo "❌ No '$DEVICE_NAME' device was found. Normal Boot."
+                BOOT_ENTRY=`ls /boot/loader/entries/*.conf | grep -v specialisation | sort -t '-' -k 3n | ls /boot/loader/entries/*.conf | grep -v specialisation | sort -t '-' -k 3n | tail -n 1 | xargs -- basename`
+                
+            fi
+
+            echo "Rebooting to boot entry '$BOOT_ENTRY'"
+            systemctl reboot --boot-loader-entry=$BOOT_ENTRY
+          '';
+
+          # This service runs once and finishes,
+          # instead of the default long-live services
+          type = "oneshot";
+
+          # "Enable" the service
+          wantedBy = [ "rescue.target" ];
+        };
+    };
     
     egpu-only.configuration = {
       system.nixos.tags = [ "egpu-only" ];
@@ -457,10 +487,10 @@
       hardware = {
         nvidia = {
           prime = {
-		offload.enable = lib.mkForce false;
-                offload.enableOffloadCmd = lib.mkForce false;
-                sync.enable = false;
-                reverseSync.enable = false;
+		        offload.enable = lib.mkForce false;
+            offload.enableOffloadCmd = lib.mkForce false;
+            sync.enable = false;
+            reverseSync.enable = false;
           };
         };
       };
