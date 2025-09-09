@@ -37,9 +37,9 @@
  
   #boot.initrd.kernelModules = [ "amdgpu" ];
   #boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernelPackages = pkgs.linuxPackages_6_12; #TODO: change back to latest once https://github.com/NixOS/nixpkgs/pull/375838 is in the stable nixos 
+  #boot.kernelPackages = pkgs.linuxPackages_6_12; #TODO: change back to latest once https://github.com/NixOS/nixpkgs/pull/375838 is in the stable nixos 
   boot.kernelModules = [ "thunderbolt-net" ]; 
-  boot.extraModulePackages = with config.boot.kernelPackages; [ turbostat ];
+  boot.extraModulePackages = with config.boot.kernelPackages; [ turbostat v4l2loopback ];
 
   boot.kernel.sysctl = { "kernel.sysrq" = 502; };
 
@@ -54,7 +54,8 @@
   networking.networkmanager.enable = true;
 
   # Set your time zone.
-  time.timeZone = "America/New_York";
+  # null is default which means it can be set dynamically
+  #time.timeZone = "America/New_York";
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
@@ -91,6 +92,11 @@
     experimental-features=['scale-monitor-framebuffer']
   '';
   };
+
+  # Also Enable KDE
+  services.desktopManager.plasma6.enable = true;
+
+  services.displayManager.defaultSession = "gnome";
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -156,13 +162,21 @@
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     #package = config.boot.kernelPackages.nvidiaPackages.stable;
+    #package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
+    #  version = "575.64.03";
+    #  sha256_64bit = "sha256-S7eqhgBLLtKZx9QwoGIsXJAyfOOspPbppTHUxB06DKA=";
+    #  sha256_aarch64 = "sha256-s2Jm2wjdmXZ2hPewHhi6hmd+V1YQ+xmVxRWBt68mLUQ=";
+    #  openSha256 = "sha256-SAl1+XH4ghz8iix95hcuJ/EVqt6ylyzFAao0mLeMmMI=";
+    #  settingsSha256 = "sha256-o8rPAi/tohvHXcBV+ZwiApEQoq+ZLhCMyHzMxIADauI=";
+    #  persistencedSha256 = "sha256-/3OAZx8iMxQLp1KD5evGXvp0nBvWriYapMwlMSc57h8=";
+    #};
     package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-      version = "570.153.02";
-      sha256_64bit = "sha256-FIiG5PaVdvqPpnFA5uXdblH5Cy7HSmXxp6czTfpd4bY=";
-      sha256_aarch64 = "sha256-FKhtEVChfw/1sV5FlFVmia/kE1HbahDJaxTlpNETlrA=";
-      openSha256 = "sha256-2DpY3rgQjYFuPfTY4U/5TcrvNqsWWnsOSX0f2TfVgTs=";
-      settingsSha256 = "sha256-5m6caud68Owy4WNqxlIQPXgEmbTe4kZV2vZyTWHWe+M=";
-      persistencedSha256 = "sha256-OSo4Od7NmezRdGm7BLLzYseWABwNGdsomBCkOsNvOxA=";
+      version = "580.65.06";
+      sha256_64bit = "sha256-BLEIZ69YXnZc+/3POe1fS9ESN1vrqwFy6qGHxqpQJP8=";
+      sha256_aarch64 = "sha256-4CrNwNINSlQapQJr/dsbm0/GvGSuOwT/nLnIknAM+cQ=";
+      openSha256 = "sha256-BKe6LQ1ZSrHUOSoV6UCksUE0+TIa0WcCHZv4lagfIgA=";
+      settingsSha256 = "sha256-9PWmj9qG/Ms8Ol5vLQD3Dlhuw4iaFtVHNC0hSyMCU24=";
+      persistencedSha256 = "sha256-ETRfj2/kPbKYX1NzE0dGr/ulMuzbICIpceXdCRDkAxA=";
     };
     
     prime = {
@@ -179,6 +193,7 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
   services.printing.drivers = [ pkgs.hplip pkgs.brlaser pkgs.cups-brother-hll2350dw ];
+  services.printing.browsed.enable = false;
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
@@ -212,6 +227,8 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+  
+  programs.dconf.enable = true; # maybe cleans up some GTK themes?
 
   programs.firefox.enable = true;
   programs.nix-ld = {
@@ -223,6 +240,12 @@
     enable = true;
     prompt.enable = true;
     lfs.enable = true;
+    package = pkgs.gitFull;
+    config = {
+    credential.helper = "${
+        pkgs.git.override { withLibsecret = true; }
+      }/bin/git-credential-libsecret";
+    };
   };
 
   programs.corefreq.enable = true;
@@ -254,6 +277,7 @@
     imagemagick
     element-desktop
     openrgb-with-all-plugins
+    openssl
 
     (python3.withPackages (subpkgs: with subpkgs; [
         pip
@@ -290,12 +314,14 @@
     kicad
     texliveFull
     mpv
+    graphviz
 
     google-chrome
 
     zoom-us
     webex
     ffmpeg-full
+    droidcam
     
     gnumake
     cmake
@@ -318,6 +344,26 @@
     gamemode
 
     libreoffice-fresh
+    onlyoffice-bin
+
+    # qt/KDE applications
+    kdePackages.discover # Optional: Install if you use Flatpak or fwupd firmware update sevice
+    kdePackages.kcalc # Calculator
+    kdePackages.kcharselect # Tool to select and copy special characters from all installed fonts
+    kdePackages.kcolorchooser # A small utility to select a color
+    kdePackages.kolourpaint # Easy-to-use paint program
+    kdePackages.ksystemlog # KDE SystemLog Application
+    #kdePackages.sddm-kcm # Configuration module for SDDM
+    kdiff3 # Compares and merges 2 or 3 files or directories
+    kdePackages.isoimagewriter # Optional: Program to write hybrid ISO files onto USB disks
+    kdePackages.partitionmanager # Optional Manage the disk devices, partitions and file systems on your computer
+    hardinfo2 # System information and benchmarks for Linux systems
+    haruna # Open source video player built with Qt/QML and libmpv
+  ];
+
+  environment.plasma6.excludePackages = with pkgs.kdePackages; [
+    kdepim-runtime
+    konsole
   ];
 
   #environment.sessionVariables.NIXOS_OZONE_WL = "1"; # electron apps aren't resizable in waland right now
@@ -393,6 +439,11 @@
   services.openssh.enable = true;
   services.openssh.ports = [ 12322 ];
 
+  # have to pick one when both gnome and KDE are present
+  #programs.ssh.askPassword = pkgs.lib.mkForce "${pkgs.kdePackages.ksshaskpass.out}/bin/ksshaskpass";
+  programs.ssh.askPassword = pkgs.lib.mkForce "${pkgs.seahorse.out}/libexec/seahorse/ssh-askpass";
+
+
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [ 12322 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
@@ -444,4 +495,22 @@
     };
     
   };
+  
+  # additional udev rules - first is for viture mouse service, second is for MCP2221 as non-root
+  services.udev.extraRules = ''
+  SUBSYSTEM=="tty", ACTION=="add", ATTRS{idVendor}=="35ca", ATTRS{idProduct}=="101d", TAG+="systemd", ENV{SYSTEMD_WANTS}+="vituremouse.service"
+  SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", MODE="0666", GROUP="plugdev"
+  '';
+  # a service to start a mouse-from-head-move script when viture glasses are connected
+  systemd.services.vituremouse = {
+    description = "Start the viture glasses mouse emulator.";
+    path = [pkgs.bash pkgs.nix pkgs.sudo];
+    environment = { NIX_PATH = "/home/erik/.nix-defexpr/channels:nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos:nixos-config=/etc/nixos/configuration.nix:/nix/var/nix/profiles/per-user/root/channels"; };
+    unitConfig.StopWhenUnneeded = "yes";
+    serviceConfig = {
+      Type = "exec";
+      ExecStart = "/home/erik/bin/viture_xr_mouse";
+    };
+  };
+  
 }
