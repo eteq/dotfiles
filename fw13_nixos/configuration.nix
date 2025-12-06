@@ -3,7 +3,9 @@
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
 { config, pkgs, lib, ... }:
-
+let 
+    earlyIntegratedDrivers = [ "amdgpu" ];
+in
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -36,7 +38,7 @@
  
   system.copySystemConfiguration = true;
  
-  #boot.initrd.kernelModules = [ "amdgpu" ];
+  boot.initrd.kernelModules = lib.mkIf (config.specialisation != {}) earlyIntegratedDrivers;
   #boot.kernelPackages = pkgs.linuxPackages_latest;
   #boot.kernelPackages = pkgs.linuxPackages_6_12; #TODO: change back to latest once https://github.com/NixOS/nixpkgs/pull/375838 is in the stable nixos 
   boot.kernelModules = [ "thunderbolt-net" ]; 
@@ -158,12 +160,12 @@
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     #package = config.boot.kernelPackages.nvidiaPackages.stable;
     package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-      version = "580.65.06";
-      sha256_64bit = "sha256-BLEIZ69YXnZc+/3POe1fS9ESN1vrqwFy6qGHxqpQJP8=";
-      sha256_aarch64 = "sha256-4CrNwNINSlQapQJr/dsbm0/GvGSuOwT/nLnIknAM+cQ=";
-      openSha256 = "sha256-BKe6LQ1ZSrHUOSoV6UCksUE0+TIa0WcCHZv4lagfIgA=";
-      settingsSha256 = "sha256-9PWmj9qG/Ms8Ol5vLQD3Dlhuw4iaFtVHNC0hSyMCU24=";
-      persistencedSha256 = "sha256-ETRfj2/kPbKYX1NzE0dGr/ulMuzbICIpceXdCRDkAxA=";
+      version = "580.95.05";
+      sha256_64bit = "sha256-hJ7w746EK5gGss3p8RwTA9VPGpp2lGfk5dlhsv4Rgqc=";
+      sha256_aarch64 = "sha256-zLRCbpiik2fGDa+d80wqV3ZV1U1b4lRjzNQJsLLlICk=";
+      openSha256 = "sha256-RFwDGQOi9jVngVONCOB5m/IYKZIeGEle7h0+0yGnBEI=";
+      settingsSha256 = "sha256-F2wmUEaRrpR1Vz0TQSwVK4Fv13f3J9NJLtBe4UP2f14=";
+      persistencedSha256 = "sha256-QCwxXQfG/Pa7jSTBB0xD3lsIofcerAWWAHKvWjWGQtg=";
     };
     
     prime = {
@@ -209,6 +211,9 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+
+  # fix needed starting 2026-10-28
+  nixpkgs.config.permittedInsecurePackages = [ "mbedtls-2.28.10" ];
   
   programs.dconf.enable = true; # maybe cleans up some GTK themes?
 
@@ -260,6 +265,7 @@
     element-desktop
     openrgb-with-all-plugins
     openssl
+    killall
 
     (python3.withPackages (subpkgs: with subpkgs; [
         pip
@@ -283,6 +289,7 @@
     usbutils
     fd
     unzip
+    zip
     wl-clipboard
 
     gimp
@@ -307,10 +314,12 @@
     rustup
     pixi
     poetry
+    nodejs_24
     nvd
     unstable.vscode.fhs
     devcontainer
     kitty
+    openocd
 
     rocmPackages.rocminfo
     rocmPackages.rocm-smi
@@ -412,6 +421,7 @@
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
   services.openssh.ports = [ 12322 ];
+  services.openssh.settings.GatewayPorts = "yes";
 
   # have to pick one when both gnome and KDE are present
   #programs.ssh.askPassword = pkgs.lib.mkForce "${pkgs.kdePackages.ksshaskpass.out}/bin/ksshaskpass";
@@ -504,6 +514,7 @@
       boot.kernelParams = [ "pci-stub.ids=1002:15bf" "module_blacklist=simpledrm" "initcall_blacklist=simpledrm_platform_driver_init" ];
       
       services.xserver.videoDrivers = [ "nvidia" ];
+      #services.xserver.videoDrivers = lib.mkForce [ "nvidia" ];
       hardware = {
         nvidia = {
           prime = {
