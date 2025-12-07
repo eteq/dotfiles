@@ -73,15 +73,17 @@ in
   
   services.hardware.bolt.enable = true;
 
+  security.polkit.enable = true;
+
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
   # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm = {
+  services.displayManager.gdm = {
     enable = true;
     wayland = true;
   };
-  services.xserver.desktopManager.gnome = {
+  services.desktopManager.gnome = {
     enable = true;     
     extraGSettingsOverridePackages = [ pkgs.mutter ];
     extraGSettingsOverrides = ''
@@ -240,7 +242,6 @@ in
   programs.vim.enable = true;
   programs.tmux.enable = true;
   programs.traceroute.enable = true;
-  
 
   environment.variables = {
     EDITOR = "vim";
