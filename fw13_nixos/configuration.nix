@@ -416,7 +416,7 @@ in
 
   virtualisation.docker = {
       enable = true;
-      enableOnBoot = true;
+      enableOnBoot = false; # socket activation
   };
 
   hardware.nvidia-container-toolkit.enable = true;
@@ -446,12 +446,6 @@ in
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "24.11"; # Did you read the comment?
-  
-  # this is needed because it seems like the driver needs starting or.... something? before it will connect on an egpu.
-  systemd.services.nvidia-container-toolkit-cdi-generator = {
-    preStart = "/run/current-system/sw/bin/sleep 30";
-    #wantedBy = lib.mkForce [ "graphical.target" ];
-  };
 
   specialisation = {
     console.configuration = {
@@ -514,7 +508,7 @@ in
    
       boot.kernelModules = [ "pci_stub" ];
 
-      boot.kernelParams = [ "pci-stub.ids=1002:15bf" "module_blacklist=simpledrm" "initcall_blacklist=simpledrm_platform_driver_init" ];
+      boot.kernelParams = [ "pci-stub.ids=1002:15bf" "module_blacklist=simpledrm,amdgpu" "initcall_blacklist=simpledrm_platform_driver_init" ];
       
       services.xserver.videoDrivers = [ "nvidia" ];
       #services.xserver.videoDrivers = lib.mkForce [ "nvidia" ];
@@ -528,7 +522,14 @@ in
           };
         };
       };
-      
+      services.displayManager.gdm.autoSuspend = false; # we're on wall power if using the egpu and nvidia can be unhappy with gdm suspend
+  
+      systemd.services.nvidia-container-toolkit-cdi-generator = {
+        wantedBy = lib.mkForce [ "docker.service" ];
+        after = lib.mkForce [ "docker.service" ];
+        requiredBy = lib.mkForce [ ];
+        #requires = [ "docker.service" ];
+      };
     };
     
   };
