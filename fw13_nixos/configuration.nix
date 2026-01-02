@@ -280,6 +280,7 @@ in
         ipykernel
         matplotlib
         pandas
+        jupyterlab
       ])
     )
     
@@ -312,6 +313,7 @@ in
     gnumake
     cmake
     gcc
+    fftw
     linuxHeaders
     rustup
     pixi
