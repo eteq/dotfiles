@@ -268,6 +268,8 @@ in
     openrgb-with-all-plugins
     openssl
     killall
+    entr
+    pwvucontrol
 
     (python3.withPackages (subpkgs: with subpkgs; [
         pip
@@ -324,6 +326,7 @@ in
     devcontainer
     kitty
     openocd
+    probe-rs-tools
 
     rocmPackages.rocminfo
     rocmPackages.rocm-smi
@@ -539,8 +542,8 @@ in
   # additional udev rules - first is for viture mouse service, second is for MCP2221 as non-root, third for rpi debug probe.  plugdev probably unneceesary but :shrug:
   services.udev.extraRules = ''
   SUBSYSTEM=="tty", ACTION=="add", ATTRS{idVendor}=="35ca", ATTRS{idProduct}=="101d", TAG+="systemd", ENV{SYSTEMD_WANTS}+="vituremouse.service"
-  SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", MODE="0666", GROUP="plugdev"
-  SUBSYSTEM=="usb", ATTRS{idVendor}=="2e8a", ATTRS{idProduct}=="000c", MODE="0666", GROUP="plugdev", TAG+="uaccess"
+  SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", MODE:="0666"
+  SUBSYSTEM=="usb", ATTRS{idVendor}=="2e8a", ATTRS{idProduct}=="000c", MODE:="0666", TAG+="uaccess"
   '';
   # a service to start a mouse-from-head-move script when viture glasses are connected
   systemd.services.vituremouse = {
