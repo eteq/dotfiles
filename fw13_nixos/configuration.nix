@@ -195,8 +195,24 @@ in
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
     jack.enable = true;
+  };
+  services.pipewire.wireplumber.extraConfig."99-disable-analog-builtin" = {
+    "monitor.alsa.rules" = [
+      {
+        matches = [
+          {
+            "device.name" = "alsa_card.pci-0000_c1_00.6";
+          }
+        ];
+        
+        actions = {
+          update-props = {
+            "device.disabled" = true;
+          };
+        };
+      }
+    ];
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
